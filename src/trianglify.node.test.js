@@ -4,7 +4,6 @@
 /* eslint-env jest */
 // Here, we test the node-specific functionality of Trianglify.
 const trianglify = require('../dist/trianglify.js')
-const { Canvas } = require('canvas')
 const Pattern = trianglify.Pattern
 
 describe('Pattern generation', () => {
@@ -30,15 +29,6 @@ describe('Pattern outputs in a node environment', () => {
 
     test('returns a synthetic tree of object literals', () => {
       expect(Object.keys(svgTree)).toEqual(['tagName', 'attrs', 'children', 'toString'])
-    })
-  })
-
-  describe('#toCanvas', () => {
-    const pattern = trianglify()
-    const canvas = pattern.toCanvas()
-    test('returns a node-canvas Canvas object', () => {
-      expect(canvas).toBeInstanceOf(Canvas)
-      expect(canvas.createPNGStream).toBeInstanceOf(Function)
     })
   })
 })

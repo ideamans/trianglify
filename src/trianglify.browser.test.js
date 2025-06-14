@@ -173,14 +173,4 @@ describe('Pattern outputs in browser environment', () => {
       expect(svgTree.toString()).toMatchSnapshot()
     })
   })
-
-  describe('#toCanvas', () => {
-    test('returns a Canvas node', () => {
-      const pattern = trianglify()
-      const canvas = pattern.toCanvas()
-      expect(canvas).toBeInstanceOf(global.HTMLElement)
-      expect(canvas.tagName).toEqual('CANVAS')
-      // there's not really any way to test the canvas contents here
-    })
-  })
 })

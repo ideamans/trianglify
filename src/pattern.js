@@ -1,5 +1,3 @@
-import { createCanvas } from 'canvas' // this is a simple shim in browsers
-import getScalingRatio from './utils/getScalingRatio'
 const isBrowser = (typeof window !== 'undefined' && typeof document !== 'undefined')
 const doc = isBrowser && document
 
@@ -86,77 +84,4 @@ export default class Pattern {
   toSVG = isBrowser
     ? (destSVG, svgOpts) => this._toSVG(sDOM, destSVG, svgOpts)
     : (destSVG, svgOpts) => this.toSVGTree(svgOpts)
-
-  toCanvas = (destCanvas, _canvasOpts = {}) => {
-    const defaultCanvasOptions = {
-      scaling: isBrowser ? 'auto' : false,
-      applyCssScaling: !!isBrowser
-    }
-    const canvasOpts = { ...defaultCanvasOptions, ..._canvasOpts }
-    const { points, polys, opts } = this
-
-    const canvas = destCanvas || createCanvas(opts.width, opts.height) // doc.createElement('canvas')
-    const ctx = canvas.getContext('2d')
-
-    if (canvasOpts.scaling) {
-      const drawRatio = canvasOpts.scaling === 'auto'
-        ? getScalingRatio(ctx)
-        : canvasOpts.scaling
-
-      if (drawRatio !== 1) {
-        // set the 'real' canvas size to the higher width/height
-        canvas.width = opts.width * drawRatio
-        canvas.height = opts.height * drawRatio
-
-        if (canvasOpts.applyCssScaling) {
-          // ...then scale it back down with CSS
-          canvas.style.width = opts.width + 'px'
-          canvas.style.height = opts.height + 'px'
-        }
-      } else {
-        // this is a normal 1:1 device: don't apply scaling
-        canvas.width = opts.width
-        canvas.height = opts.height
-        if (canvasOpts.applyCssScaling) {
-          canvas.style.width = ''
-          canvas.style.height = ''
-        }
-      }
-      ctx.scale(drawRatio, drawRatio)
-    }
-
-    const drawPoly = (poly, fill, stroke) => {
-      const vertexIndices = poly.vertexIndices
-      ctx.lineJoin = 'round'
-      ctx.beginPath()
-      ctx.moveTo(points[vertexIndices[0]][0], points[vertexIndices[0]][1])
-      ctx.lineTo(points[vertexIndices[1]][0], points[vertexIndices[1]][1])
-      ctx.lineTo(points[vertexIndices[2]][0], points[vertexIndices[2]][1])
-      ctx.closePath()
-      if (fill) {
-        ctx.fillStyle = fill.color.css()
-        ctx.fill()
-      }
-      if (stroke) {
-        ctx.strokeStyle = stroke.color.css()
-        ctx.lineWidth = stroke.width
-        ctx.stroke()
-      }
-    }
-
-    if (opts.fill && opts.strokeWidth < 1) {
-      // draw background strokes at edge bounds to solve for white gaps due to
-      // canvas antialiasing. See https://stackoverflow.com/q/19319963/381299
-      polys.forEach(poly => drawPoly(poly, null, { color: poly.color, width: 2 }))
-    }
-
-    // draw visible fills and strokes
-    polys.forEach(poly => drawPoly(
-      poly,
-      opts.fill && { color: poly.color },
-      (opts.strokeWidth > 0) && { color: poly.color, width: opts.strokeWidth }
-    ))
-
-    return canvas
-  }
 }

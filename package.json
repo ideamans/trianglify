@@ -37,11 +37,6 @@
       "**/vendor/**"
     ]
   },
-  "jest": {
-    "setupFiles": [
-      "jest-canvas-mock"
-    ]
-  },
   "author": "Quinn Rohlf <qr@qrohlf.com>",
   "license": "GPL-3.0",
   "bugs": {
