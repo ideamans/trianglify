@@ -11,5 +11,8 @@ module.exports = {
     '**/__tests__/**/*.(js|jsx|ts|tsx)',
     '**/?(*.)+(spec|test).(js|jsx|ts|tsx)'
   ],
-  moduleFileExtensions: ['js', 'jsx', 'ts', 'tsx', 'json']
+  moduleFileExtensions: ['js', 'jsx', 'ts', 'tsx', 'json'],
+  testEnvironmentOptions: {
+    pretendToBeVisual: true
+  }
 }
