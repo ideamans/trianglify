@@ -1,8 +1,9 @@
 {
   "name": "trianglify-ts-no-canvas",
-  "version": "4.2.0",
+  "version": "4.2.1",
   "description": "A TypeScript fork of Trianglify without Canvas support. Generates colorful triangle meshes that can be used as SVG images and CSS backgrounds.",
   "main": "dist/trianglify.js",
+  "types": "dist/trianglify.d.ts",
   "scripts": {
     "lint": "ts-standard --fix",
     "test": "jest",
