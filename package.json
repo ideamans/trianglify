@@ -1,7 +1,7 @@
 {
-  "name": "trianglify",
-  "version": "4.1.1",
-  "description": "Trianglify is a javascript library for generating colorful triangle meshes that can be used as SVG images and CSS backgrounds.",
+  "name": "trianglify-ts-no-canvas",
+  "version": "4.2.0",
+  "description": "A TypeScript fork of Trianglify without Canvas support. Generates colorful triangle meshes that can be used as SVG images and CSS backgrounds.",
   "main": "dist/trianglify.js",
   "scripts": {
     "lint": "ts-standard --fix",
