@@ -3,7 +3,8 @@
  */
 /* eslint-env jest */
 // Here, we test the node-specific functionality of Trianglify.
-const trianglify = require('../dist/trianglify.js')
+// @ts-expect-error - no types for dist
+import trianglify from '../dist/trianglify.js'
 const Pattern = trianglify.Pattern
 
 describe('Pattern generation', () => {
@@ -18,7 +19,8 @@ describe('Pattern generation', () => {
   })
 
   test('should match snapshot for non-breaking version bumps', () => {
-    expect(trianglify({ seed: 'snapshotText' }).toSVG().toString()).toMatchSnapshot()
+    const svgTree = trianglify({ seed: 'snapshotText' }).toSVG() as any
+    expect(svgTree.toString()).toMatchSnapshot()
   })
 })
 

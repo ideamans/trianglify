@@ -16,7 +16,9 @@
 // pull in the transpiled, browser-bundle version of trianglify.
 // this is needed so that we get the browser-targeted Canvas shim, and
 // NOT the node library
-const trianglify = require('../dist/trianglify.bundle.debug.js')
+
+// @ts-expect-error - no types for bundle
+import trianglify from '../dist/trianglify.bundle.debug.js'
 const Pattern = trianglify.Pattern
 
 describe('Public API', () => {
@@ -45,7 +47,7 @@ describe('Public API', () => {
 describe('Options Parsing', () => {
   test('should throw an error on unrecognized options', () => {
     expect(
-      () => trianglify({ height: 100, width: 100, bad_option: true })
+      () => trianglify({ height: 100, width: 100, bad_option: true } as any)
     ).toThrow()
   })
 
@@ -107,14 +109,14 @@ describe('Pattern generation', () => {
     // we care about pattern.points and pattern.polys here
     expect(pattern.points).toBeInstanceOf(Array)
     // assert that points is an array of [x, y] tuples
-    pattern.points.forEach(point => {
+    pattern.points.forEach((point: any) => {
       expect(point).toBeInstanceOf(Array)
       expect(point).toHaveLength(2)
     })
 
     // asset the polys looks right
     expect(pattern.polys).toBeInstanceOf(Array)
-    pattern.polys.forEach(poly => {
+    pattern.polys.forEach((poly: any) => {
       expect(poly).toBeInstanceOf(Object)
       expect(Object.keys(poly)).toEqual(['vertexIndices', 'centroid', 'color'])
     })
@@ -144,7 +146,7 @@ describe('Pattern outputs in browser environment', () => {
       const svgDOM = pattern.toSVG()
       expect(svgDOM.tagName).toEqual('svg')
       expect(svgDOM.children).toBeInstanceOf(global.HTMLCollection)
-      Array.from(svgDOM.children).forEach(node => {
+      Array.from(svgDOM.children).forEach((node: any) => {
         expect(node.tagName).toEqual('path')
       })
       expect(svgDOM.children).toHaveLength(pattern.polys.length)

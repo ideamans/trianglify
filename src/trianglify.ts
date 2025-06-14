@@ -8,7 +8,7 @@
 import Delaunator from 'delaunator'
 // TODO - evaluate smaller alternatives
 // (chroma bloats bundle by 40k, minified)
-import chroma from 'chroma-js'
+import chroma, { type Color, type Scale } from 'chroma-js'
 
 import colorbrewer from './utils/colorbrewer'
 import Pattern from './pattern'
@@ -16,7 +16,50 @@ import mulberry32 from './utils/mulberry32'
 import * as geom from './utils/geom'
 import * as colorFunctions from './utils/colorFunctions'
 
-const defaultOptions = {
+export interface ColorFunctionInput {
+  centroid: { x: number, y: number }
+  xPercent: number
+  yPercent: number
+  vertexIndices: number[]
+  vertices: Array<[number, number]>
+  xScale: Scale
+  yScale: Scale
+  points: Points
+  opts: Options
+  random: () => number
+}
+
+export type ColorFunction = (args: ColorFunctionInput) => Color
+export type Points = Array<[number, number]>
+export type Palette = Record<string, string[]> | string[][]
+
+export interface Options {
+  width?: number
+  height?: number
+  cellSize?: number
+  variance?: number
+  seed?: string | null | undefined
+  xColors?: string | string[]
+  yColors?: string | string[]
+  palette?: Palette
+  colorSpace?: 'rgb' | 'hsl' | 'hsv' | 'hsi' | 'lab' | 'oklab' | 'lch' | 'oklch' | 'hcl' | 'lrgb'
+  colorFunction?: ColorFunction
+  fill?: boolean
+  strokeWidth?: number
+  points?: Points | null
+}
+
+export type RequiredOptions = Required<Options>
+
+export interface Poly {
+  vertexIndices: number[]
+  centroid: { x: number, y: number }
+  color: Color
+}
+
+export type Polys = Poly[]
+
+const defaultOptions: RequiredOptions = {
   width: 600,
   height: 400,
   cellSize: 75,
@@ -39,13 +82,13 @@ const defaultOptions = {
 // 3. Generate random points within cell geometry
 // 4. Use the Delaunator library to run the triangulation
 // 5. Do color interpolation to establish the fundamental coloring of the shapes
-export default function trianglify (_opts = {}) {
+export default function trianglify (_opts: Options = {}): Pattern {
   Object.keys(_opts).forEach(k => {
-    if (defaultOptions[k] === undefined) {
+    if ((defaultOptions as any)[k] === undefined) {
       throw TypeError(`Unrecognized option: ${k}`)
     }
   })
-  const opts = { ...defaultOptions, ..._opts }
+  const opts: RequiredOptions = { ...defaultOptions, ..._opts }
 
   if (!(opts.height > 0)) {
     throw TypeError(`invalid height: ${opts.height}`)
@@ -55,10 +98,10 @@ export default function trianglify (_opts = {}) {
   }
 
   // standard randomizer, used for point gen and layout
-  const rand = mulberry32(opts.seed)
+  const rand = mulberry32(opts.seed ?? undefined)
 
-  const randomFromPalette = () => {
-    if (opts.palette instanceof Array) {
+  const randomFromPalette = (): string[] => {
+    if (Array.isArray(opts.palette)) {
       return opts.palette[Math.floor(rand() * opts.palette.length)]
     }
     const keys = Object.keys(opts.palette)
@@ -68,11 +111,11 @@ export default function trianglify (_opts = {}) {
   // The first step here is to set up our color scales for the X and Y axis.
   // First, munge the shortcut options like 'random' or 'match' into real color
   // arrays. Then, set up a Chroma scale in the appropriate color space.
-  const processColorOpts = (colorOpt) => {
+  const processColorOpts = (colorOpt: string | string[]): string[] => {
     switch (true) {
       case Array.isArray(colorOpt):
         return colorOpt
-      case !!opts.palette[colorOpt]:
+      case typeof colorOpt === 'string' && opts.palette !== undefined && !Array.isArray(opts.palette) && opts.palette[colorOpt] !== undefined:
         return opts.palette[colorOpt]
       case colorOpt === 'random':
         return randomFromPalette()
@@ -91,17 +134,17 @@ export default function trianglify (_opts = {}) {
 
   // Our next step is to generate a pseudo-random grid of {x, y} points,
   // (or to simply utilize the points that were passed to us)
-  const points = opts.points || getPoints(opts, rand)
+  const points = opts.points ?? getPoints(opts, rand)
 
   // Once we have the points array, run the triangulation
-  var geomIndices = Delaunator.from(points).triangles
+  const geomIndices = Delaunator.from(points).triangles
   // ...and then generate geometry and color data:
 
   // use a different (salted) randomizer for the color function so that
   // swapping out color functions doesn't change the pattern geometry itself
   const salt = 42
-  const cRand = mulberry32(opts.seed ? opts.seed + salt : null)
-  const polys = []
+  const cRand = mulberry32(opts.seed != null ? `${opts.seed}${salt}` : undefined)
+  const polys: Polys = []
 
   for (let i = 0; i < geomIndices.length; i += 3) {
     // convert shallow array-packed vertex indices into 3-tuples
@@ -115,8 +158,8 @@ export default function trianglify (_opts = {}) {
     const vertices = vertexIndices.map(i => points[i])
 
     const { width, height } = opts
-    const norm = num => Math.max(0, Math.min(1, num))
-    const centroid = geom.getCentroid(vertices)
+    const norm = (num: number): number => Math.max(0, Math.min(1, num))
+    const centroid = geom.getCentroid(vertices as [[number, number], [number, number], [number, number]])
     const xPercent = norm(centroid.x / width)
     const yPercent = norm(centroid.y / height)
 
@@ -143,7 +186,7 @@ export default function trianglify (_opts = {}) {
   return new Pattern(points, polys, opts)
 }
 
-const getPoints = (opts, random) => {
+const getPoints = (opts: RequiredOptions, random: () => number): Points => {
   const { width, height, cellSize, variance } = opts
 
   // pad by 2 cells outside the visible area on each side to ensure we fully
@@ -158,17 +201,17 @@ const getPoints = (opts, random) => {
 
   // apply variance to cellSize to get cellJitter in pixels
   const cellJitter = cellSize * variance
-  const getJitter = () => (random() - 0.5) * cellJitter
+  const getJitter = (): number => (random() - 0.5) * cellJitter
 
   const pointCount = colCount * rowCount
 
   const halfCell = cellSize / 2
 
-  const points = Array(pointCount).fill(null).map((_, i) => {
+  const points: Points = Array(pointCount).fill(null).map((_, i) => {
     const col = i % colCount
     const row = Math.floor(i / colCount)
 
-    // [x, y, z]
+    // [x, y]
     return [
       -bleedX + col * cellSize + halfCell + getJitter(),
       -bleedY + row * cellSize + halfCell + getJitter()
