@@ -12,7 +12,6 @@
     "ci": "npm run lint && npm run build && npm run test"
   },
   "dependencies": {
-    "canvas": "^2.6.1",
     "chroma-js": "^2.1.0",
     "delaunator": "^4.0.1"
   },
@@ -25,7 +24,6 @@
   },
   "keywords": [
     "svg",
-    "canvas",
     "visualization",
     "pattern",
     "lowpoly"
